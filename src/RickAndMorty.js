@@ -566,8 +566,8 @@ class RickAndMorty extends React.Component {
     return  ( <div className="rick-and-morty">
 
                 <div className="header">
-                  <div> &nbsp;Rick and Morty <a href="https://rickandmortyapi.com/">API</a> </div>
-                  <div> <a href="https://google.com">src</a>&nbsp; </div>
+                  <div>&nbsp;Rick and Morty <a href="https://rickandmortyapi.com/">API</a></div>
+                  <div><a href="https://github.com/sluchaynayakotya/reactgovno/src/RickAndMorty.js">src</a>&nbsp;</div>
                 </div>
 
                 <div className="section-container">
