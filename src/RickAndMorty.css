@@ -1,0 +1,200 @@
+
+
+
+a {
+  color: blue !important;
+  text-decoration: none;
+}
+
+
+
+
+
+
+.rick-and-morty {
+
+  height: 100vh;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-direction: column;
+
+}
+
+
+
+
+
+
+
+.modal-extended-card {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border: 1px solid black;
+  background: white;
+  padding: 2em;
+  border-radius: 2px;
+  box-shadow: 1em 1em;
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow: auto;
+  overflow-wrap: anywhere;
+}
+
+.modal-extended-card--show {
+  display: block;
+}
+
+.modal-extended-card--hidden {
+  display: none;
+}
+
+.modal-extended-card__close {
+  position: fixed;
+  right: 0;
+  top: 0;
+  background: black;
+  color: white;
+  cursor: pointer;
+  height: 1.5em;
+}
+
+.modal-extended-card__close:hover {
+  background: blue;
+}
+
+.modal-extended-card__data {
+  display: flex;
+  justify-content: space-between;
+}
+
+.modal-extended-card__title {
+  font-style: italic;
+}
+
+
+
+
+
+
+
+.section {
+
+  width: 90vw;
+  max-width: 24em;
+
+  border: 1px dashed black;
+  margin: 1em;
+
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  flex-direction: column;
+
+  border-radius: 2px;
+
+  max-height: 33.5em; /* custom height to make sections scrollable, calculated to show 4 cards */
+  overflow: auto;
+}
+
+
+
+
+
+
+
+
+.card {
+
+  border: 1px solid black;
+
+  --margin-size: 0.5em;
+  --margin-size-double: 1em;
+  margin: var(--margin-size);
+
+  width: 90%;
+
+  cursor: pointer;
+
+  display: flex;
+  align-content: center;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5em;
+  text-align: right;
+
+  border-radius: 2px;
+}
+
+.card:hover {
+  background: blue;
+  color: white;
+  border-color: blue;
+}
+
+.card:hover img {
+  filter: invert(100%);
+}
+
+.card:first-child {
+  margin: var(--margin-size-double) 0 var(--margin-size) 0;
+}
+
+.card:last-child {
+  margin: var(--margin-size) 0 var(--margin-size-double) 0;
+}
+
+.card img {
+  width: 6em;
+  height: 6em;
+  border-radius: 2px;
+}
+
+.card .italic {
+  font-style: italic;
+}
+
+.card .bold {
+  font-weight: bold;
+}
+
+
+
+
+
+
+.header {
+
+  width: 100vw;
+  display: flex;
+  justify-content: space-between;
+
+}
+
+
+
+
+
+.section-container {
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+
+}
+
+
+
+
+
+.footer {
+
+  text-align: right;
+  width: 100vw;
+
+}
+
