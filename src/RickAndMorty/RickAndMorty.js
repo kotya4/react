@@ -1,18 +1,17 @@
 import React from 'react'
 import './RickAndMorty.css'
-import './scrollbar.css'
 
 
-import LoveHate from './LoveHate'
+import LoveHate from '../LoveHate/LoveHate'
 
 
 
-import ajax from './ajax'
+import ajax from '../common/ajax'
 
 
-import noun_episode_3856385 from './images/noun_episode_3856385.svg'
-import noun_Map_4212639 from './images/noun_Map_4212639.svg'
-import noun_broken_1399559 from './images/noun_broken_1399559.svg'
+import noun_episode_3856385 from '../images/noun_episode_3856385.svg'
+import noun_Map_4212639 from '../images/noun_Map_4212639.svg'
+import noun_broken_1399559 from '../images/noun_broken_1399559.svg'
 
 
 
@@ -332,6 +331,8 @@ class ModalExtendedCard extends React.Component {
 /*
   static getDerivedStateFromProps ( props, state ) {
 
+    // TODO: fetch episode, residents and characters on this.render_data
+
     console.log ( 'getDerivedStateFromProps' )
 
     console.log ( props.data )
@@ -567,7 +568,7 @@ class RickAndMorty extends React.Component {
 
                 <div className="header">
                   <div>&nbsp;Rick and Morty <a href="https://rickandmortyapi.com/">API</a></div>
-                  <div><a href="https://github.com/sluchaynayakotya/reactgovno/src/RickAndMorty.js">src</a>&nbsp;</div>
+                  <div><a href="https://github.com/sluchaynayakotya/reactgovno/src/RickAndMorty">src</a>&nbsp;</div>
                 </div>
 
                 <div className="section-container">
