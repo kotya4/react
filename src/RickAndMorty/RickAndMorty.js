@@ -2,7 +2,7 @@ import React from 'react'
 import './RickAndMorty.css'
 
 
-import LoveHate from '../LoveHate/LoveHate'
+import LoveHate from './LoveHate'
 
 
 
