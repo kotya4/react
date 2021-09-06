@@ -14,7 +14,7 @@ ReactDOM.render ( <React.StrictMode>
                             <div className="container">
                               <div>available subapplications</div>
                               <br />
-                              <Link to="/rick"> RickAndMorty </Link>
+                              <Link to="/rick"> RickAndMorty [ css-unsafe ]</Link>
                               <Link to="/mush"> MushroomSearch </Link>
                             </div>
                           </Route>

@@ -25,7 +25,8 @@
       "react-app/jest"
     ],
     "rules": {
-      "no-whitespace-before-property": "off"
+      "no-whitespace-before-property": "off",
+      "rest-spread-spacing": "off"
     }
   },
   "browserslist": {

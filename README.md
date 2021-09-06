@@ -1,10 +1,15 @@
 
 All my reactjs stuff is here.
 
-For now, there is only one project.
+See src/index.js to find out all subapplications
 
+additional packages ( unless what was added by "npx create-react-app [projname]" ):
+  node-sass
+  react-router-dom
 
-
+Custom eslint rules:
+  no-whitespace-before-property off
+  rest-spread-spacing off
 
 
 
