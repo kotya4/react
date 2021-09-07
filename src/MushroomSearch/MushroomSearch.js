@@ -2,57 +2,87 @@ import React, { useState, useRef, useEffect, Children, cloneElement, useCallback
 
 import styles from './MushroomSearch.module.sass'
 
-import axi from '../images/axi.png'
+// import axi from '../images/axi.png'
 
 
 
-const Grabbable = ( { children, parent, x, y, spawn_leaf_at } ) => {
 
-  const [ transition, transition__set ] = useState ( 0 )
 
-  const [ is_grabbed, is_grabbed__set ] = useState ( false )
+
+
+
+
+
+
+
+
+
+
+
+
+const Stuff = ( { emoji, font_size, can_be_rotated, type } ) => {
+
+  const fontSize = font_size + 'em'
+  const zIndex = type === 'leaf' ? 1 : 0
+  const transform = `scaleX( ${ Math.sign ( Math.random () - 0.5 ) } ) rotate( ${ can_be_rotated ? Math.random () * 360 | 0 : 0 }deg )`
+
+  return  ( <div  className={ styles.Emoji }
+                  style={ { transform, zIndex, fontSize } }>
+              {
+                emoji
+              }
+            </div> )
+
+}
+
+
+
+
+
+
+
+
+
+const Grabbable = ( { children, parent, x, y, dispawnable=false, handle_pos=null } ) => {
+
+  const [ transition, transition__set ] = useState ( 0 ) // speed of transition, related to interval_speed
+
+  const [ dispawned, _ ] = useState ( false )
+
+  const [ grabbed, grabbed__set ] = useState ( false )
+
   const [ pos_x, pos_x__set ] = useState ( x )
   const [ pos_y, pos_y__set ] = useState ( y )
 
-  const [ down_x_offset, down_x_offset__set ] = useState ( 0 )
+  const [ down_x_offset, down_x_offset__set ] = useState ( 0 ) // when grabbed, offset between element origin and mouse position
   const [ down_y_offset, down_y_offset__set ] = useState ( 0 )
 
-  const handle_move = useCallback ( onmove, [ down_x_offset, down_y_offset, is_grabbed ] )
+  const handle_move = useCallback ( onmove, [ down_x_offset, down_y_offset, grabbed ] )
   const handle_up   = useCallback ( onup, [] )
   const handle_down = useCallback ( ondown, [ parent ] )
 
-  const speed = 15
+  const speed = 55
   const interval_speed = 1000
 
   useEffect( () => {
 
-    const { width, height } = parent.getBoundingClientRect ()
+    if ( ! parent ) return
 
-    const margin_x = width * 0.2
+    const { height } = parent.getBoundingClientRect ()
 
     let interval_id = null
 
-    if ( ! is_grabbed ) {
+    if ( pos_y > height / 2 ) { // если pos_y больше height / 2 тогда вызывается Treasure->handle_pos
+
+      handle_pos && handle_pos ()
+
+    } else if ( ! grabbed && ! dispawned ) {
 
       transition__set ( interval_speed / 1000 )
 
       interval_id = setInterval ( () => {
 
-        pos_y__set ( v => {
-
-          if ( v < height )
-            return v + speed
-
-          const new_pos_x = margin_x + Math.random () * ( width - margin_x * 2 )
-          const new_pos_y = 0
-
-          pos_x__set ( new_pos_x )
-
-          spawn_leaf_at && spawn_leaf_at ( new_pos_x, new_pos_y )
-
-          return new_pos_y
-
-        } )
+        pos_y__set ( v => v + speed )
 
       }, interval_speed )
 
@@ -82,7 +112,7 @@ const Grabbable = ( { children, parent, x, y, spawn_leaf_at } ) => {
 
     }
 
-  }, [ parent, is_grabbed, handle_move, handle_up, spawn_leaf_at ] )
+  }, [ parent, grabbed, dispawned, handle_move, handle_up ] )
 
   const left = pos_x + 'px'
   const top = pos_y + 'px'
@@ -91,17 +121,18 @@ const Grabbable = ( { children, parent, x, y, spawn_leaf_at } ) => {
                   onMouseDown={ handle_down }
                   onTouchStart={ handle_down }
                   style={ { left, top, transitionDuration: `${ transition }s` } }>
-
-              { children }
-
+              {
+                children
+              }
             </div> )
+
 
 
 
   function onmove ( e ) {
     e.preventDefault ()
 
-    if ( ! is_grabbed ) return
+    if ( ! grabbed ) return
 
     const move_x = e.clientX || e.touches[ 0 ].clientX
     const move_y = e.clientY || e.touches[ 0 ].clientY
@@ -116,7 +147,7 @@ const Grabbable = ( { children, parent, x, y, spawn_leaf_at } ) => {
   function onup ( e ) {
     e.preventDefault ()
 
-    is_grabbed__set ( false )
+    grabbed__set ( false )
 
   }
 
@@ -124,14 +155,14 @@ const Grabbable = ( { children, parent, x, y, spawn_leaf_at } ) => {
   function ondown ( e ) {
     e.preventDefault ()
 
-    is_grabbed__set ( true )
+    grabbed__set ( true )
 
     const down_x = e.clientX || e.touches[ 0 ].clientX
     const down_y = e.clientY || e.touches[ 0 ].clientY
 
     const { x, y } = e.target.getBoundingClientRect ()
 
-    const { x:px, y:py } = parent.getBoundingClientRect ()
+    const { x: px, y: py } = parent.getBoundingClientRect ()
 
     down_x_offset__set ( down_x - x + px )
     down_y_offset__set ( down_y - y + py )
@@ -146,6 +177,53 @@ const Grabbable = ( { children, parent, x, y, spawn_leaf_at } ) => {
 
 
 
+const Treasure = ( { parent } ) => {
+
+  const stuff = [
+    { name: 'fallen leaf',             emoji: '🍂', font_size: 3.0, can_be_rotated: true,  type: 'leaf'     },
+    { name: 'leaf fluttering in wind', emoji: '🍃', font_size: 3.5, can_be_rotated: false, type: 'leaf'     },
+    { name: 'Four Leaf Clover',        emoji: '🍀', font_size: 3.0, can_be_rotated: true,  type: 'leaf'     },
+    { name: 'Herb',                    emoji: '🌿', font_size: 3.0, can_be_rotated: false, type: 'leaf'     },
+    { name: 'Maple Leaf',              emoji: '🍁', font_size: 3.0, can_be_rotated: true,  type: 'leaf'     },
+    { name: 'Shamrock',                emoji: '☘', font_size: 5.0, can_be_rotated: false, type: 'leaf'     },
+    { name: 'mushroom',                emoji: '🍄', font_size: 1.5, can_be_rotated: false, type: 'mushroom' },
+    { name: 'bug',                     emoji: '🐛', font_size: 1.5, can_be_rotated: false, type: 'bug'      },
+    { name: 'Ant',                     emoji: '🐜', font_size: 1.5, can_be_rotated: false, type: 'bug'      },
+    { name: 'Honeybee',                emoji: '🐝', font_size: 1.5, can_be_rotated: false, type: 'bug'      },
+    { name: 'Lady Beetle',             emoji: '🐞', font_size: 1.5, can_be_rotated: false, type: 'bug'      },
+  ]
+
+  const mushes = stuff.filter ( ( { type } ) => type === 'mushroom' )
+  const leafs = stuff.filter ( ( { type } ) => type === 'leaf' )
+  const bugs = stuff.filter ( ( { type } ) => type === 'bug' )
+
+  const { width } = parent.getBoundingClientRect ()
+
+  // const [ [ x, y ], pos__set ] = useState ( [ Math.random () * width, Math.random () * height ] )
+  const [ [ x, y ], pos__set ] = useState ( [ Math.random () * width, 0 ] )
+
+  const margin_x = width * 0.2
+
+  const handle_pos = () => {
+
+    pos__set ( [ margin_x + Math.random () * ( width - margin_x * 2 ), 0 ] )
+
+  }
+
+  // console.log ( 'Treasure', x, y )
+
+  return  [ [ <Stuff { ... _choice ( leafs ) } />, { x, y } ]
+          , [ <Stuff { ... _choice ( _choice ( [ bugs, mushes ] ) ) } />, { x, y, handle_pos } ]
+          ].map ( ( [ stuff, props ], i ) => <Grabbable key={ i } parent={ parent } { ...props }>{ stuff }</Grabbable> )
+
+  function _choice ( a ) {
+
+    return a[ a.length * Math.random () | 0 ]
+
+  }
+
+
+}
 
 
 
@@ -154,76 +232,34 @@ const Grabbable = ( { children, parent, x, y, spawn_leaf_at } ) => {
 
 
 
+const TreasureContainer = ( { children } ) => {
 
-
-
-const GrabbableContainer = ( { children } ) => {
-
-  const [ is_loaded, is_loaded__set ] = useState ( false )
-  const [ bounding_rect, bounding_rect__set ] = useState ( { width : 0, height: 0 } )
+  const [ ref_loaded, ref_loaded__set ] = useState ( false )
 
   const ref = useRef ( null )
-
 
   useEffect( () => {
 
     if ( ref.current ) {
 
-      is_loaded__set ( true )
-      bounding_rect__set ( ref.current.getBoundingClientRect () )
-
-    }
-
-    return () => {
-
+      ref_loaded__set ( true )
 
     }
 
   }, [] )
 
-  const margin_left = bounding_rect.width * 0.2
-  const margin_top = bounding_rect.height * 0.2
+  console.log ( 'TreasureContainer' )
 
-  return  ( <div  className={ styles.GrabbableContainer }
+  return  ( <div  className={ styles.TreasureContainer }
                   ref={ ref }>
-
-              { is_loaded
-                  ? Children.map ( children, ( e, i ) => cloneElement ( e,  { parent : ref.current
-                                                                            , x : margin_left + Math.random () * ( bounding_rect.width - margin_left * 2 )
-                                                                            , y : Math.random () * bounding_rect.height
-                                                                            } ) )
+              {
+                ref_loaded
+                  ? Children.map ( children, ( e, i ) => cloneElement ( e, { parent: ref.current } ) )
                   : null
               }
-
             </div> )
 
 }
-
-
-
-
-
-
-
-
-
-
-
-const Emoji = ( { emoji, font_size, can_be_rotated, type } ) => {
-
-  return  ( <div  className={ [ styles.Emoji, font_size ].join ( ' ' ) }
-                  style={ { transform : `scaleX( ${ Math.sign ( Math.random () - 0.5 ) } ) rotate( ${ can_be_rotated ? Math.random () * 360 | 0 : 0 }deg )`
-                          , zIndex : type === 'wheed' ? 1 : 0
-                          } }>
-
-              { emoji }
-
-            </div> )
-
-}
-
-
-
 
 
 
@@ -234,54 +270,13 @@ const Emoji = ( { emoji, font_size, can_be_rotated, type } ) => {
 
 const MushroomSearch = () => {
 
-  const emojis = [
-    { name: 'fallen leaf',             emoji: '🍂', font_size: styles.EmojiBig,     can_be_rotated: true,  type: 'wheed'    },
-    { name: 'leaf fluttering in wind', emoji: '🍃', font_size: styles.EmojiVeryBig, can_be_rotated: false, type: 'wheed'    },
-    { name: 'Four Leaf Clover',        emoji: '🍀', font_size: styles.EmojiBig,     can_be_rotated: true,  type: 'wheed'    },
-    { name: 'Herb',                    emoji: '🌿', font_size: styles.EmojiBig,     can_be_rotated: false, type: 'wheed'    },
-    { name: 'Maple Leaf',              emoji: '🍁', font_size: styles.EmojiBig,     can_be_rotated: true,  type: 'wheed'    },
-    { name: 'Shamrock',                emoji: '☘', font_size: styles.EmojiGiant,   can_be_rotated: false, type: 'wheed'    },
-    { name: 'mushroom',                emoji: '🍄', font_size: styles.EmojiNormal,  can_be_rotated: false, type: 'mushroom' },
-    { name: 'bug',                     emoji: '🐛', font_size: styles.EmojiNormal,  can_be_rotated: false, type: 'bug'      },
-    { name: 'Ant',                     emoji: '🐜', font_size: styles.EmojiNormal,  can_be_rotated: false, type: 'bug'      },
-    { name: 'Honeybee',                emoji: '🐝', font_size: styles.EmojiNormal,  can_be_rotated: false, type: 'bug'      },
-    { name: 'Lady Beetle',             emoji: '🐞', font_size: styles.EmojiNormal,  can_be_rotated: false, type: 'bug'      },
-  ]
-
-  const bugs = emojis .filter ( ( { type } ) => type === 'bug' )
-  const wheeds = emojis .filter ( ( { type } ) => type === 'wheed' )
-  const mushrooms = emojis .filter ( ( { type } ) => type === 'mushroom' )
-
-  const num = 10
-  const stuff = [ ... Array ( num >> 1 ) .fill () .map ( () => bugs[ Math.random () * bugs.length | 0 ] )
-                , ... Array ( num - ( num >> 1 ) ) .fill () .map ( () => mushrooms[ Math.random () * mushrooms.length | 0 ] )
-                ]
-  const cover = Array ( num ) .fill () .map ( () => wheeds[ Math.random () * wheeds.length | 0 ] )
-  // const all = [ ... ]
-
   return  ( <div className={ styles.MushroomSearch }>
-              <GrabbableContainer>
-
-                <Grabbable>
-                  <img alt="" src={ axi } />
-                </Grabbable>
-
+              <TreasureContainer>
                 {
-                  stuff.map ( ( props, i ) => <Grabbable  key={ i }
-                                                          spawn_leaf_at={ spawn_leaf_at }>
-                                                <Emoji { ...props } />
-                                              </Grabbable> )
+                  Array ( 1 ) .fill () .map ( ( _, i ) => <Treasure key={ i } /> )
                 }
-
-            </GrabbableContainer>
-          </div> )
-
-
-  function spawn_leaf_at ( x, y ) {
-
-    console.log ( x, y )
-
-  }
+              </TreasureContainer>
+            </div> )
 
 }
 
