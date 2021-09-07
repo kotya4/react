@@ -2,29 +2,63 @@ import React, { useState, useRef, useEffect, Children, cloneElement, useCallback
 
 import styles from './MushroomSearch.module.sass'
 
+import axi from '../images/axi.png'
 
 
 
+const Grabbable = ( { children, parent, x, y, spawn_leaf_at } ) => {
 
-const Grabbable = ( { children, parent, x, y } ) => {
+  const [ transition, transition__set ] = useState ( 0 )
 
   const [ is_grabbed, is_grabbed__set ] = useState ( false )
-  const [ grabbed_x, grabbed_x__set ] = useState ( x )
-  const [ grabbed_y, grabbed_y__set ] = useState ( y )
+  const [ pos_x, pos_x__set ] = useState ( x )
+  const [ pos_y, pos_y__set ] = useState ( y )
 
   const [ down_x_offset, down_x_offset__set ] = useState ( 0 )
   const [ down_y_offset, down_y_offset__set ] = useState ( 0 )
-
-  const left = grabbed_x + 'px'
-  const top = grabbed_y + 'px'
 
   const handle_move = useCallback ( onmove, [ down_x_offset, down_y_offset, is_grabbed ] )
   const handle_up   = useCallback ( onup, [] )
   const handle_down = useCallback ( ondown, [ parent ] )
 
+  const speed = 15
+  const interval_speed = 1000
+
   useEffect( () => {
 
-    if ( is_grabbed ) {
+    const { width, height } = parent.getBoundingClientRect ()
+
+    const margin_x = width * 0.2
+
+    let interval_id = null
+
+    if ( ! is_grabbed ) {
+
+      transition__set ( interval_speed / 1000 )
+
+      interval_id = setInterval ( () => {
+
+        pos_y__set ( v => {
+
+          if ( v < height )
+            return v + speed
+
+          const new_pos_x = margin_x + Math.random () * ( width - margin_x * 2 )
+          const new_pos_y = 0
+
+          pos_x__set ( new_pos_x )
+
+          spawn_leaf_at && spawn_leaf_at ( new_pos_x, new_pos_y )
+
+          return new_pos_y
+
+        } )
+
+      }, interval_speed )
+
+    } else {
+
+      transition__set ( 0 )
 
       parent.addEventListener ( 'mousemove', handle_move )
       parent.addEventListener ( 'mouseup', handle_up )
@@ -37,6 +71,8 @@ const Grabbable = ( { children, parent, x, y } ) => {
 
     return () => {
 
+      clearInterval ( interval_id )
+
       parent.removeEventListener ( 'mousemove', handle_move )
       parent.removeEventListener ( 'mouseup', handle_up )
       parent.removeEventListener ( 'mouseleave', handle_up )
@@ -46,13 +82,15 @@ const Grabbable = ( { children, parent, x, y } ) => {
 
     }
 
-  }, [ parent, is_grabbed, handle_move, handle_up ] )
+  }, [ parent, is_grabbed, handle_move, handle_up, spawn_leaf_at ] )
 
+  const left = pos_x + 'px'
+  const top = pos_y + 'px'
 
   return  ( <div  className={ styles.Grabbable }
                   onMouseDown={ handle_down }
                   onTouchStart={ handle_down }
-                  style={ { left, top } }>
+                  style={ { left, top, transitionDuration: `${ transition }s` } }>
 
               { children }
 
@@ -68,8 +106,8 @@ const Grabbable = ( { children, parent, x, y } ) => {
     const move_x = e.clientX || e.touches[ 0 ].clientX
     const move_y = e.clientY || e.touches[ 0 ].clientY
 
-    grabbed_x__set ( move_x - down_x_offset )
-    grabbed_y__set ( move_y - down_y_offset )
+    pos_x__set ( move_x - down_x_offset )
+    pos_y__set ( move_y - down_y_offset )
 
   }
 
@@ -136,12 +174,8 @@ const GrabbableContainer = ( { children } ) => {
 
     }
 
-
-    // const iid = setInterval ( () => { console.log ( Math.random () * 10 | 0 ) }, 500 )
-
     return () => {
 
-      // clearInterval ( iid )
 
     }
 
@@ -156,7 +190,7 @@ const GrabbableContainer = ( { children } ) => {
               { is_loaded
                   ? Children.map ( children, ( e, i ) => cloneElement ( e,  { parent : ref.current
                                                                             , x : margin_left + Math.random () * ( bounding_rect.width - margin_left * 2 )
-                                                                            , y : margin_top + Math.random () * ( bounding_rect.height - margin_top * 2 )
+                                                                            , y : Math.random () * bounding_rect.height
                                                                             } ) )
                   : null
               }
@@ -229,15 +263,25 @@ const MushroomSearch = () => {
               <GrabbableContainer>
 
                 <Grabbable>
-                  fuck you
+                  <img alt="" src={ axi } />
                 </Grabbable>
 
                 {
-                  stuff.map ( ( props, i ) => <Grabbable key={ i }><Emoji { ...props } /></Grabbable> )
+                  stuff.map ( ( props, i ) => <Grabbable  key={ i }
+                                                          spawn_leaf_at={ spawn_leaf_at }>
+                                                <Emoji { ...props } />
+                                              </Grabbable> )
                 }
 
             </GrabbableContainer>
           </div> )
+
+
+  function spawn_leaf_at ( x, y ) {
+
+    console.log ( x, y )
+
+  }
 
 }
 
