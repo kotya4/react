@@ -3,14 +3,33 @@
   src: url( '../fonts/NotoEmoji-Regular.ttf' )
 
 
+.MushroomSearch
+  height: 100vh
+  display: flex
+  justify-content: center
+  align-items: center
+
+
 .GrabbableContainer
-  width: 500px
-  height: 500px
-  margin: 50px
-  background: lightblue
   position: relative
   user-select: none
   overflow: hidden
+  border: 1px dashed black
+  border-radius: 2px
+  width: 500px
+  height: 400px
+
+
+@media ( min-aspect-ratio: 1/1 )
+  .GrabbableContainer
+    width: 60vh
+    height: 60vh
+
+
+@media ( max-aspect-ratio: 1/1 )
+  .GrabbableContainer
+    width: 60vw
+    height: 60vw
 
 
 
@@ -18,6 +37,25 @@
   position: absolute
 
 
+.EmojiGiant
+  font-size: 5em
+
+
+.EmojiVeryBig
+  font-size: 3.5em
+
+
+.EmojiBig
+  font-size: 3em
+
+
+.EmojiNormal
+  font-size: 1.5em
+
+
 .Emoji
   font-family: NotoEmojiRegular, monospace
-  font-size: 24px
+  color: white
+  text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black
+  position: relative
+
