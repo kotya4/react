@@ -77,12 +77,15 @@ const Grabbable = ( { children, parent, x, y, fuck=null, handle_treasure_dispawn
 
       superfuck__set ( fuck )
 
+      const { width } = parent.getBoundingClientRect ()
+      const margin_x = width * 0.2
+
       pos_x__set ( hash.magic ( fuck ) * ( width - margin_x * 2 ) + margin_x )
       pos_y__set ( 0 )
 
     }
 
-  }, [ fuck, superfuck ] )
+  }, [ fuck, superfuck, parent ] )
 
 
   useEffect ( () => {

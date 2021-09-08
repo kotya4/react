@@ -21,6 +21,8 @@ TODOs:
 
 TIPs:
 
+  * hash is a magic infinite float-manifold (grupoid, [+,sin,1]) starting with : Array ( 10 ) .fill() .map ( ( _, i ) => hash.magic ( i ) )
+
   * to use ModuleCSS you need to name ur css-file as [smh].module.[css|scss|sass|...]
 
   * https://medium.com/jsdownunder/webpack-build-performance-pitfall-of-using-sass-with-css-modules-ba32f89efdcb
