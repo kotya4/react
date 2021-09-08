@@ -9,7 +9,9 @@ TODOs:
 
 * bad file managing: why some subcomponents separated from supercomponent but others are not?
 
+* модалка не закрывается на телефоне, выделяется текст
 
+* модалка слишком большая на телефоне, она должна ограничивать свою широту широтой экрана
 
 
 // So there is my 6 hours of pain:
