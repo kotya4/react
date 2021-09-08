@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, Children, cloneElement, useCallback
 
 import styles from './MushroomSearch.module.sass'
 
-// import axi from '../images/axi.png'
+import noun_basket_1212091 from '../images/noun_basket_1212091.svg'
 
 import hash from '../common/hash.js'
 
@@ -45,7 +45,7 @@ const StuffSoul = ( { emoji, font_size, can_be_rotated, type, stuff_id } ) => {
 
 
 
-const Grabbable = ( { children, parent, x, y, stuff_id=null, handle_dispawned=null, not_falling=false, handle_click=null } ) => {
+const Grabbable = ( { children, parent, x, y, stuff_id=null, handle_dispawned=null, handle_basketed=null } ) => {
 
   const { width } = parent.getBoundingClientRect ()
   const margin_x = width * 0.2
@@ -63,7 +63,7 @@ const Grabbable = ( { children, parent, x, y, stuff_id=null, handle_dispawned=nu
   const [ down_y_offset, down_y_offset__set ] = useState ( 0 )
 
   const handle_move = useCallback ( onmove, [ down_x_offset, down_y_offset, grabbed ] )
-  const handle_up   = useCallback ( onup, [] )
+  const handle_up   = useCallback ( onup, [ pos_x, pos_y, handle_basketed ] )
   const handle_down = useCallback ( ondown, [ parent ] )
 
   const speed = 55
@@ -136,7 +136,7 @@ const Grabbable = ( { children, parent, x, y, stuff_id=null, handle_dispawned=nu
 
     let interval_id = null
 
-    if ( ! grabbed && ! not_falling ) {
+    if ( ! grabbed ) {
 
       interval_id = setInterval ( () => {
 
@@ -165,7 +165,7 @@ const Grabbable = ( { children, parent, x, y, stuff_id=null, handle_dispawned=nu
 
     }
 
-  }, [ grabbed, parent, handle_dispawned, not_falling, stuff_id ] )
+  }, [ grabbed, parent, handle_dispawned, stuff_id ] )
 
 
 
@@ -176,13 +176,12 @@ const Grabbable = ( { children, parent, x, y, stuff_id=null, handle_dispawned=nu
   return  ( <div  className={ styles.Grabbable }
                   onMouseDown={ handle_down }
                   onTouchStart={ handle_down }
-                  onClick={ () => handle_click && handle_click ( stuff_id ) }
                   style={ { left, top, transitionDuration } }>
               {
                 children
               }
               {
-                superstuff_id
+                // superstuff_id
               }
             </div> )
 
@@ -205,6 +204,12 @@ const Grabbable = ( { children, parent, x, y, stuff_id=null, handle_dispawned=nu
     e.preventDefault ()
 
     grabbed__set ( false )
+
+    if ( handle_basketed ) {
+
+      handle_basketed ( pos_x, pos_y )
+
+    }
 
   }
 
@@ -235,16 +240,11 @@ const Grabbable = ( { children, parent, x, y, stuff_id=null, handle_dispawned=nu
 
 
 
-const Stuff = ( { parent, not_fallings_meta } ) => {
+const Stuff = ( { parent, handle_mushroom_basketed } ) => {
 
   const [ stuff_id, new_treasure ] = useState ( 1 )
 
   const { mushes, leafs, bugs } = define_stuff_soul ()
-
-  // HACK: when not_fallings_meta element is updated, not_fallings_meta_updated must be updated
-  //       to apply updates. not_fallings_meta cannot be wrapped into state, because updating
-  //       not_fallings_meta-wrapper element via setter does rerender only ONE time  (｡╯︵╰｡)
-  const [ not_fallings_meta_updated, not_fallings_meta_updated__set ] = useState ( false )
 
   const handle_treasure_dispawned = () => {
 
@@ -252,41 +252,32 @@ const Stuff = ( { parent, not_fallings_meta } ) => {
 
   }
 
-  // HACK: on update not_fallings_meta_updated must be "unupdated" because it's value mixed with not_fallings
-  useEffect ( () => {
+  const _handle_mushroom_basketed = ( x, y ) => {
 
-    if ( not_fallings_meta_updated ) {
+    if ( handle_mushroom_basketed ( x, y ) ) {
 
-      not_fallings_meta_updated__set ( false )
+      new_treasure ( v => v + 1 )
 
     }
 
-  }, [ not_fallings_meta_updated ] )
-
-
-  const handle_leaf_touched = ( stuff_id ) => {
-
-    // HACK: not_fallings not updated without updating not_fallings_meta_updated
-    not_fallings_meta_updated__set ( true )
-    not_fallings_meta[ stuff_id ] = true
-
   }
-
 
   const leaf_elements = Array ( stuff_id ) .fill () .map ( ( _, i ) =>
                                                   <Grabbable  key={ i }
                                                               parent={ parent }
-                                                              stuff_id={ i + 1 }
-                                                              not_falling={ not_fallings_meta_updated || not_fallings_meta[ i + 1 ] }
-                                                              handle_click={ handle_leaf_touched }>
+                                                              stuff_id={ i + 1 }>
                                                     <StuffSoul { ... _choice ( leafs, i ) } />
                                                   </Grabbable> )
+
+  const treasure = _choice ( _choice ( [ bugs, mushes ], stuff_id ), stuff_id )
+
 
   const treasure_element =  <Grabbable  key={ stuff_id }
                                         parent={ parent }
                                         stuff_id={ stuff_id }
-                                        handle_dispawned={ handle_treasure_dispawned }>
-                              <StuffSoul { ... _choice ( _choice ( [ bugs, mushes ], stuff_id ), stuff_id ) } />
+                                        handle_dispawned={ handle_treasure_dispawned }
+                                        handle_basketed={ treasure.type === 'mushroom' ? _handle_mushroom_basketed : null }>
+                              <StuffSoul { ... treasure } />
                             </Grabbable>
 
   return [ ...leaf_elements, treasure_element ]
@@ -347,7 +338,11 @@ const StuffContainer = ( { children } ) => {
 
   const ref = useRef ( null )
 
+  const backet_ref = useRef ( null )
+
   const [ parent, parent__set ] = useState ( null )
+
+  const [ backet, backet__set ] = useState ( null )
 
   useEffect ( () => {
 
@@ -357,19 +352,47 @@ const StuffContainer = ( { children } ) => {
 
     }
 
+    if ( backet_ref.current ) {
+
+      backet__set ( backet_ref.current )
+
+    }
+
   }, [] )
 
-  // HACK:
-  const not_fallings_meta = Children.map ( children, () => [] )
+  const [ mushrooms_basketed, mushrooms_basketed__set ] = useState ( 0 )
 
-  return  ( <div  className={ styles.StuffContainer }
+  const handle_mushroom_basketed = ( x, y ) => {
+
+    const { x: backet_x, y: backet_y, width, height } = backet.getBoundingClientRect ()
+    const { x: parent_x, y: parent_y } = parent.getBoundingClientRect ()
+
+    // TODO: maybe radius, not box ?
+    // TODO: stuff size must be checked as well
+
+    if ( backet_x - parent_x < x && x < backet_x - parent_x + width && backet_y - parent_y < y && y < backet_y - parent_y + height ) {
+
+      mushrooms_basketed__set ( v => v + 1 )
+      return true
+
+    }
+
+    return false
+
+  }
+
+  return  [ <div  className={ styles.StuffContainer }
+                  key={ 0 }
                   ref={ ref }>
               {
                 parent
-                  ? Children.map ( children, ( e, stuff_id ) => cloneElement ( e, { parent: parent, not_fallings_meta } ) )
+                  ? Children.map ( children, ( e, stuff_id ) => cloneElement ( e, { parent: parent, handle_mushroom_basketed } ) )
                   : null
               }
-            </div> )
+              <img key={ 2 } alt="" src={ noun_basket_1212091 } className={ styles.Basket } ref={ backet_ref } />
+            </div>
+          , <div key={ 1 }>mushrooms basketed: { mushrooms_basketed }</div>
+          ]
 
 }
 
