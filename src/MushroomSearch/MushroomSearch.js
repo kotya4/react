@@ -20,11 +20,11 @@ import hash from '../common/hash.js'
 
 
 
-const Stuff = ( { emoji, font_size, can_be_rotated, type, fuck } ) => {
+const StuffSoul = ( { emoji, font_size, can_be_rotated, type, stuff_id } ) => {
 
   const fontSize = font_size + 'em'
   const zIndex = type === 'leaf' ? 1 : 0
-  const transform = `scaleX( ${ Math.sign ( hash.magic ( fuck ) - 0.5 ) } ) rotate( ${ can_be_rotated ? hash.magic ( fuck ) * 360 | 0 : 0 }deg )`
+  const transform = `scaleX( ${ Math.sign ( hash.magic ( stuff_id ) - 0.5 ) } ) rotate( ${ can_be_rotated ? hash.magic ( stuff_id ) * 360 | 0 : 0 }deg )`
 
   return  ( <div  className={ styles.Emoji }
                   style={ { transform, zIndex, fontSize } }>
@@ -45,7 +45,7 @@ const Stuff = ( { emoji, font_size, can_be_rotated, type, fuck } ) => {
 
 
 
-const Grabbable = ( { children, parent, x, y, fuck=null, handle_treasure_dispawner=null } ) => {
+const Grabbable = ( { children, parent, x, y, stuff_id=null, handle_dispawned=null, not_falling=false, handle_click=null } ) => {
 
   const { width } = parent.getBoundingClientRect ()
   const margin_x = width * 0.2
@@ -54,10 +54,10 @@ const Grabbable = ( { children, parent, x, y, fuck=null, handle_treasure_dispawn
 
   const [ grabbed, grabbed__set ] = useState ( false )
 
-  const [ pos_x, pos_x__set ] = useState ( hash.magic ( fuck ) * ( width - margin_x * 2 ) + margin_x )
+  const [ pos_x, pos_x__set ] = useState ( hash.magic ( stuff_id ) * ( width - margin_x * 2 ) + margin_x )
   const [ pos_y, pos_y__set ] = useState ( 0 )
 
-  const [ superfuck, superfuck__set ] = useState ( fuck )
+  const [ superstuff_id, superstuff_id__set ] = useState ( stuff_id )
 
   const [ down_x_offset, down_x_offset__set ] = useState ( 0 ) // when grabbed, offset between element origin and mouse position
   const [ down_y_offset, down_y_offset__set ] = useState ( 0 )
@@ -73,19 +73,19 @@ const Grabbable = ( { children, parent, x, y, fuck=null, handle_treasure_dispawn
 
   useEffect ( () => {
 
-    if ( superfuck !== fuck ) {
+    if ( superstuff_id !== stuff_id ) {
 
-      superfuck__set ( fuck )
+      superstuff_id__set ( stuff_id )
 
       const { width } = parent.getBoundingClientRect ()
       const margin_x = width * 0.2
 
-      pos_x__set ( hash.magic ( fuck ) * ( width - margin_x * 2 ) + margin_x )
+      pos_x__set ( hash.magic ( stuff_id ) * ( width - margin_x * 2 ) + margin_x )
       pos_y__set ( 0 )
 
     }
 
-  }, [ fuck, superfuck, parent ] )
+  }, [ stuff_id, superstuff_id, parent ] )
 
 
   useEffect ( () => {
@@ -136,7 +136,7 @@ const Grabbable = ( { children, parent, x, y, fuck=null, handle_treasure_dispawn
 
     let interval_id = null
 
-    if ( ! grabbed ) {
+    if ( ! grabbed && ! not_falling ) {
 
       interval_id = setInterval ( () => {
 
@@ -147,9 +147,9 @@ const Grabbable = ( { children, parent, x, y, fuck=null, handle_treasure_dispawn
 
         if ( new_pos_y > height / 1 ) {
 
-          if ( handle_treasure_dispawner ) {
+          if ( handle_dispawned ) {
 
-            handle_treasure_dispawner ()
+            handle_dispawned ( stuff_id )
 
           }
 
@@ -165,18 +165,7 @@ const Grabbable = ( { children, parent, x, y, fuck=null, handle_treasure_dispawn
 
     }
 
-  }, [ grabbed, parent, handle_treasure_dispawner ] )
-
-
-
-
-
-
-
-
-
-
-
+  }, [ grabbed, parent, handle_dispawned, not_falling, stuff_id ] )
 
 
 
@@ -187,12 +176,13 @@ const Grabbable = ( { children, parent, x, y, fuck=null, handle_treasure_dispawn
   return  ( <div  className={ styles.Grabbable }
                   onMouseDown={ handle_down }
                   onTouchStart={ handle_down }
+                  onClick={ () => handle_click && handle_click ( stuff_id ) }
                   style={ { left, top, transitionDuration } }>
               {
                 children
               }
               {
-                superfuck
+                superstuff_id
               }
             </div> )
 
@@ -245,41 +235,58 @@ const Grabbable = ( { children, parent, x, y, fuck=null, handle_treasure_dispawn
 
 
 
-const Treasure = ( { parent } ) => {
+const Stuff = ( { parent, not_fallings_meta } ) => {
 
-  console.log ( 'Treasure' )
+  const [ stuff_id, new_treasure ] = useState ( 1 )
 
-  const { width } = parent.getBoundingClientRect ()
+  const { mushes, leafs, bugs } = define_stuff_soul ()
 
-  const margin_x = width * 0.2
+  // HACK: when not_fallings_meta element is updated, not_fallings_meta_updated must be updated
+  //       to apply updates. not_fallings_meta cannot be wrapped into state, because updating
+  //       not_fallings_meta-wrapper element via setter does rerender only ONE time  (｡╯︵╰｡)
+  const [ not_fallings_meta_updated, not_fallings_meta_updated__set ] = useState ( false )
 
-  // const [ x, x__set ] = useState ( hash.magic ( fuck ) * ( width - margin_x * 2 ) + margin_x )
-  // const [ y, y__set ] = useState ( 0 )
+  const handle_treasure_dispawned = () => {
 
-  const [ fuck, you ] = useState ( 1 )
+    new_treasure ( v => v + 1 )
 
-  const { mushes, leafs, bugs } = define_stuff ()
+  }
+
+  // HACK: on update not_fallings_meta_updated must be "unupdated" because it's value mixed with not_fallings
+  useEffect ( () => {
+
+    if ( not_fallings_meta_updated ) {
+
+      not_fallings_meta_updated__set ( false )
+
+    }
+
+  }, [ not_fallings_meta_updated ] )
 
 
-  const handle_treasure_dispawned = useCallback ( () => {
+  const handle_leaf_touched = ( stuff_id ) => {
 
-    you ( v => v + 1 )
+    // HACK: not_fallings not updated without updating not_fallings_meta_updated
+    not_fallings_meta_updated__set ( true )
+    not_fallings_meta[ stuff_id ] = true
 
-  }, [] )
+  }
 
 
-  const leaf_elements = Array ( fuck ) .fill () .map ( ( _, i ) =>
+  const leaf_elements = Array ( stuff_id ) .fill () .map ( ( _, i ) =>
                                                   <Grabbable  key={ i }
                                                               parent={ parent }
-                                                              fuck={ i + 1 }>
-                                                    <Stuff { ... _choice ( leafs, i ) } />
+                                                              stuff_id={ i + 1 }
+                                                              not_falling={ not_fallings_meta_updated || not_fallings_meta[ i + 1 ] }
+                                                              handle_click={ handle_leaf_touched }>
+                                                    <StuffSoul { ... _choice ( leafs, i ) } />
                                                   </Grabbable> )
 
-  const treasure_element =  <Grabbable  key={ fuck }
+  const treasure_element =  <Grabbable  key={ stuff_id }
                                         parent={ parent }
-                                        fuck={ fuck }
-                                        handle_treasure_dispawned={ handle_treasure_dispawned }>
-                              <Stuff { ... _choice ( _choice ( [ bugs, mushes ], fuck ), fuck ) } />
+                                        stuff_id={ stuff_id }
+                                        handle_dispawned={ handle_treasure_dispawned }>
+                              <StuffSoul { ... _choice ( _choice ( [ bugs, mushes ], stuff_id ), stuff_id ) } />
                             </Grabbable>
 
   return [ ...leaf_elements, treasure_element ]
@@ -289,7 +296,7 @@ const Treasure = ( { parent } ) => {
 
 
 
-  function define_stuff () {
+  function define_stuff_soul () {
 
     const stuff = [
       { name: 'fallen leaf',             emoji: '🍂', font_size: 3.0, can_be_rotated: true,  type: 'leaf'     },
@@ -334,9 +341,9 @@ const Treasure = ( { parent } ) => {
 
 
 
-const TreasureContainer = ( { children } ) => {
+const StuffContainer = ( { children } ) => {
 
-  console.log ( 'TreasureContainer' )
+  console.log ( 'StuffContainer' )
 
   const ref = useRef ( null )
 
@@ -352,13 +359,13 @@ const TreasureContainer = ( { children } ) => {
 
   }, [] )
 
+  const not_fallings_meta = Children.map ( children, () => [] )
 
-
-  return  ( <div  className={ styles.TreasureContainer }
+  return  ( <div  className={ styles.StuffContainer }
                   ref={ ref }>
               {
                 parent
-                  ? Children.map ( children, ( e, i ) => cloneElement ( e, { parent: parent } ) )
+                  ? Children.map ( children, ( e, stuff_id ) => cloneElement ( e, { parent: parent, not_fallings_meta } ) )
                   : null
               }
             </div> )
@@ -379,11 +386,11 @@ const TreasureContainer = ( { children } ) => {
 const MushroomSearch = () => {
 
   return  ( <div className={ styles.MushroomSearch }>
-              <TreasureContainer>
+              <StuffContainer>
                 {
-                  Array ( 1 ) .fill () .map ( ( _, i ) => <Treasure key={ i } /> )
+                  Array ( 1 ) .fill () .map ( ( _, i ) => <Stuff key={ i } /> )
                 }
-              </TreasureContainer>
+              </StuffContainer>
             </div> )
 
 }
