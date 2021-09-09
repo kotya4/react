@@ -6,6 +6,8 @@ import noun_basket_1212091 from '../images/noun_basket_1212091.svg'
 
 import hash from '../common/hash.js'
 
+import ClientStorage from '../common/ClientStorage.js'
+
 
 
 
@@ -24,7 +26,7 @@ const StuffSoul = ( { emoji, font_size, can_be_rotated, type, stuff_id } ) => {
 
   const fontSize = font_size + 'em'
   const zIndex = type === 'leaf' ? 1 : 0
-  const transform = `scaleX( ${ Math.sign ( hash.magic ( stuff_id ) - 0.5 ) } ) rotate( ${ can_be_rotated ? hash.magic ( stuff_id ) * 360 | 0 : 0 }deg )`
+  const transform = `scaleX( ${ Math.sign ( hash.hash ( stuff_id ) - 0.5 ) } ) rotate( ${ can_be_rotated ? hash.hash ( stuff_id ) * 360 | 0 : 0 }deg )`
 
   return  ( <div  className={ styles.Emoji }
                   style={ { transform, zIndex, fontSize } }>
@@ -45,17 +47,20 @@ const StuffSoul = ( { emoji, font_size, can_be_rotated, type, stuff_id } ) => {
 
 
 
-const Grabbable = ( { children, parent, x, y, stuff_id=null, handle_dispawned=null, handle_basketed=null } ) => {
+const Grabbable = ( { children, parent, stuff_id, dx=0, dy=0, handle_dispawned=null, handle_basketed=null } ) => {
 
-  const { width } = parent.getBoundingClientRect ()
+  const { width, height } = parent.getBoundingClientRect ()
   const margin_x = width * 0.2
+
+  const default_pos_x = hash.hash ( stuff_id ) * ( width - margin_x * 2 ) + margin_x + dx
+  const default_pos_y = 0 - hash.hash ( stuff_id ) * height + dy
 
   const [ transition, transition__set ] = useState ( 0 ) // speed of transition, related to interval_delay
 
   const [ grabbed, grabbed__set ] = useState ( false )
 
-  const [ pos_x, pos_x__set ] = useState ( hash.magic ( stuff_id ) * ( width - margin_x * 2 ) + margin_x )
-  const [ pos_y, pos_y__set ] = useState ( 0 )
+  const [ pos_x, pos_x__set ] = useState ( default_pos_x )
+  const [ pos_y, pos_y__set ] = useState ( default_pos_y )
 
   const [ superstuff_id, superstuff_id__set ] = useState ( stuff_id )
 
@@ -77,25 +82,26 @@ const Grabbable = ( { children, parent, x, y, stuff_id=null, handle_dispawned=nu
 
       superstuff_id__set ( stuff_id )
 
-      const { width } = parent.getBoundingClientRect ()
-      const margin_x = width * 0.2
-
-      pos_x__set ( hash.magic ( stuff_id ) * ( width - margin_x * 2 ) + margin_x )
-      pos_y__set ( 0 )
+      pos_x__set ( default_pos_x )
+      pos_y__set ( default_pos_y )
 
     }
 
-  }, [ stuff_id, superstuff_id, parent ] )
+  }, [ stuff_id, superstuff_id, default_pos_x, default_pos_y ] )
 
 
   useEffect ( () => {
 
-    parent.addEventListener ( 'mousemove', handle_move )
-    parent.addEventListener ( 'mouseup', handle_up )
-    parent.addEventListener ( 'mouseleave', handle_up )
-    parent.addEventListener ( 'touchmove', handle_move )
-    parent.addEventListener ( 'touchend', handle_up )
-    parent.addEventListener ( 'touchcancel', handle_up )
+    if ( grabbed ) {
+
+      parent.addEventListener ( 'mousemove', handle_move )
+      parent.addEventListener ( 'mouseup', handle_up )
+      parent.addEventListener ( 'mouseleave', handle_up )
+      parent.addEventListener ( 'touchmove', handle_move )
+      parent.addEventListener ( 'touchend', handle_up )
+      parent.addEventListener ( 'touchcancel', handle_up )
+
+    }
 
     return () => {
 
@@ -108,7 +114,7 @@ const Grabbable = ( { children, parent, x, y, stuff_id=null, handle_dispawned=nu
 
     }
 
-  }, [ parent, handle_move, handle_up ] )
+  }, [ parent, handle_move, handle_up, grabbed ] )
 
 
 
@@ -143,7 +149,7 @@ const Grabbable = ( { children, parent, x, y, stuff_id=null, handle_dispawned=nu
         let new_pos_y = 0
         pos_y__set ( v => new_pos_y = v + speed )
 
-        const { height } = parent.getBoundingClientRect ()
+        // const { height } = parent.getBoundingClientRect ()
 
         if ( new_pos_y > height / 1 ) {
 
@@ -165,7 +171,7 @@ const Grabbable = ( { children, parent, x, y, stuff_id=null, handle_dispawned=nu
 
     }
 
-  }, [ grabbed, parent, handle_dispawned, stuff_id ] )
+  }, [ grabbed, handle_dispawned, stuff_id, height ] )
 
 
 
@@ -207,7 +213,11 @@ const Grabbable = ( { children, parent, x, y, stuff_id=null, handle_dispawned=nu
 
     if ( handle_basketed ) {
 
-      handle_basketed ( pos_x, pos_y )
+      // TODO: mouse position instead of center of emoji
+
+      const { width, height } = e.target.getBoundingClientRect ()
+
+      handle_basketed ( pos_x + width / 2, pos_y + height / 2 )
 
     }
 
@@ -240,7 +250,9 @@ const Grabbable = ( { children, parent, x, y, stuff_id=null, handle_dispawned=nu
 
 
 
-const Stuff = ( { parent, handle_mushroom_basketed } ) => {
+const Stuff = ( { seed, parent, handle_basketed } ) => {
+
+  hash.adorable = ( seed2 ) => hash.magic ( seed2 * hash.magic ( seed ) )
 
   const [ stuff_id, new_treasure ] = useState ( 1 )
 
@@ -252,19 +264,12 @@ const Stuff = ( { parent, handle_mushroom_basketed } ) => {
 
   }
 
-  const _handle_mushroom_basketed = ( x, y ) => {
-
-    if ( handle_mushroom_basketed ( x, y ) ) {
-
-      new_treasure ( v => v + 1 )
-
-    }
-
-  }
 
   const leaf_elements = Array ( stuff_id ) .fill () .map ( ( _, i ) =>
                                                   <Grabbable  key={ i }
                                                               parent={ parent }
+                                                              dx={ -10 - hash.hash ( i + 1 ) * 10 }
+                                                              dy={ -10 }
                                                               stuff_id={ i + 1 }>
                                                     <StuffSoul { ... _choice ( leafs, i ) } />
                                                   </Grabbable> )
@@ -272,11 +277,21 @@ const Stuff = ( { parent, handle_mushroom_basketed } ) => {
   const treasure = _choice ( _choice ( [ bugs, mushes ], stuff_id ), stuff_id )
 
 
+  const handle_basketed_treasure = ( x, y ) => {
+
+    if ( handle_basketed ( x, y, treasure.type ) ) {
+
+      new_treasure ( v => v + 1 )
+
+    }
+
+  }
+
   const treasure_element =  <Grabbable  key={ stuff_id }
                                         parent={ parent }
                                         stuff_id={ stuff_id }
                                         handle_dispawned={ handle_treasure_dispawned }
-                                        handle_basketed={ treasure.type === 'mushroom' ? _handle_mushroom_basketed : null }>
+                                        handle_basketed={ handle_basketed_treasure }>
                               <StuffSoul { ... treasure } />
                             </Grabbable>
 
@@ -316,7 +331,7 @@ const Stuff = ( { parent, handle_mushroom_basketed } ) => {
 
   function _choice ( a, seed=0 ) {
 
-    return a[ a.length * hash.magic ( seed ) | 0 ]
+    return a[ a.length * hash.hash ( seed ) | 0 ]
 
   }
 
@@ -360,15 +375,27 @@ const StuffContainer = ( { children } ) => {
 
   }, [] )
 
-  const [ mushrooms_basketed, mushrooms_basketed__set ] = useState ( 0 )
+  const storage = new ClientStorage ( 'mushroomsearch', 'hhyydishhsdmmyyueu' )
 
-  const handle_mushroom_basketed = ( x, y ) => {
+  const [ mushrooms_basketed, _mushrooms_basketed__set ] = useState ( storage.get ( 'mushrooms_basketed', 0 ) )
+
+
+  const mushrooms_basketed__set = ( v ) => {
+
+    storage.set ( 'mushrooms_basketed', v ( mushrooms_basketed ) )
+    storage.update ()
+
+    _mushrooms_basketed__set ( v )
+  }
+
+  const handle_basketed = ( x, y, type ) => {
+
+    if ( type !== 'mushroom' ) return false
 
     const { x: backet_x, y: backet_y, width, height } = backet.getBoundingClientRect ()
     const { x: parent_x, y: parent_y } = parent.getBoundingClientRect ()
 
     // TODO: maybe radius, not box ?
-    // TODO: stuff size must be checked as well
 
     if ( backet_x - parent_x < x && x < backet_x - parent_x + width && backet_y - parent_y < y && y < backet_y - parent_y + height ) {
 
@@ -386,7 +413,7 @@ const StuffContainer = ( { children } ) => {
                   ref={ ref }>
               {
                 parent
-                  ? Children.map ( children, ( e, stuff_id ) => cloneElement ( e, { parent: parent, handle_mushroom_basketed } ) )
+                  ? Children.map ( children, ( e, stuff_id ) => cloneElement ( e, { parent: parent, handle_basketed } ) )
                   : null
               }
               <img key={ 2 } alt="" src={ noun_basket_1212091 } className={ styles.Basket } ref={ backet_ref } />
@@ -412,7 +439,7 @@ const MushroomSearch = () => {
   return  ( <div className={ styles.MushroomSearch }>
               <StuffContainer>
                 {
-                  Array ( 1 ) .fill () .map ( ( _, i ) => <Stuff key={ i } /> )
+                  Array ( 5 ) .fill () .map ( ( _, i ) => <Stuff key={ i } seed={ i } /> )
                 }
               </StuffContainer>
             </div> )
