@@ -14,14 +14,15 @@
 
 TODOs:
 
+  * упавшие за край экрана листья продолжают падать бесконечно ( по хорошему их нужно диспавнить )
+
   * last touched subcomponent of GrabbableContainer not on top
 
-  * maybe useReducer is preverable over useState in GrabbableContainer
-
+  * maybe useReducer is preferable over useState in GrabbableContainer
 
 TIPs:
 
-  * hash is a magic infinite float-manifold (grupoid, [+,sin,1]) starting with : Array ( 10 ) .fill() .map ( ( _, i ) => hash.magic ( i ) )
+  * hash ish a magic infinite float-manifold aka grupoid [+,sin,1]
 
   * to use ModuleCSS you need to name ur css-file as [smh].module.[css|scss|sass|...]
 

@@ -60,6 +60,12 @@ a {
   overflow-wrap: anywhere;
 }
 
+.modal-extended-card img {
+  max-width: 75vw;
+  max-height: 35vh;
+}
+
+
 .modal-extended-card--show {
   display: block;
 }

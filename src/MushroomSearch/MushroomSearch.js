@@ -47,7 +47,7 @@ const StuffSoul = ( { emoji, font_size, can_be_rotated, type, stuff_id } ) => {
 
 
 
-const Grabbable = ( { children, parent, stuff_id, dx=0, dy=0, handle_dispawned=null, handle_basketed=null } ) => {
+const Grabbable = ( { children, parent, stuff_id, dx=0, dy=0, handle_dispawned=null, handle_basketed=null, froze_on_touch=false } ) => {
 
   const { width, height } = parent.getBoundingClientRect ()
   const margin_x = width * 0.2
@@ -58,6 +58,7 @@ const Grabbable = ( { children, parent, stuff_id, dx=0, dy=0, handle_dispawned=n
   const [ transition, transition__set ] = useState ( 0 ) // speed of transition, related to interval_delay
 
   const [ grabbed, grabbed__set ] = useState ( false )
+  const [ frozen, frozen__set ] = useState ( false )
 
   const [ pos_x, pos_x__set ] = useState ( default_pos_x )
   const [ pos_y, pos_y__set ] = useState ( default_pos_y )
@@ -69,7 +70,7 @@ const Grabbable = ( { children, parent, stuff_id, dx=0, dy=0, handle_dispawned=n
 
   const handle_move = useCallback ( onmove, [ down_x_offset, down_y_offset, grabbed ] )
   const handle_up   = useCallback ( onup, [ pos_x, pos_y, handle_basketed ] )
-  const handle_down = useCallback ( ondown, [ parent ] )
+  const handle_down = useCallback ( ondown, [ parent, froze_on_touch ] )
 
   const speed = 55
   const interval_delay = 1000
@@ -142,7 +143,7 @@ const Grabbable = ( { children, parent, stuff_id, dx=0, dy=0, handle_dispawned=n
 
     let interval_id = null
 
-    if ( ! grabbed ) {
+    if ( ! grabbed && ! frozen ) {
 
       interval_id = setInterval ( () => {
 
@@ -171,7 +172,7 @@ const Grabbable = ( { children, parent, stuff_id, dx=0, dy=0, handle_dispawned=n
 
     }
 
-  }, [ grabbed, handle_dispawned, stuff_id, height ] )
+  }, [ grabbed, handle_dispawned, stuff_id, height, frozen ] )
 
 
 
@@ -239,6 +240,8 @@ const Grabbable = ( { children, parent, stuff_id, dx=0, dy=0, handle_dispawned=n
     down_x_offset__set ( down_x - x + px )
     down_y_offset__set ( down_y - y + py )
 
+    if ( froze_on_touch ) frozen__set ( true )
+
   }
 
 
@@ -250,7 +253,7 @@ const Grabbable = ( { children, parent, stuff_id, dx=0, dy=0, handle_dispawned=n
 
 
 
-const Stuff = ( { seed, parent, handle_basketed } ) => {
+const Stuff = ( { seed, parent, handle_basketed_treasure } ) => {
 
   hash.adorable = ( seed2 ) => hash.magic ( seed2 * hash.magic ( seed ) )
 
@@ -270,16 +273,17 @@ const Stuff = ( { seed, parent, handle_basketed } ) => {
                                                               parent={ parent }
                                                               dx={ -10 - hash.hash ( i + 1 ) * 10 }
                                                               dy={ -10 }
-                                                              stuff_id={ i + 1 }>
+                                                              stuff_id={ i + 1 }
+                                                              froze_on_touch={ true }>
                                                     <StuffSoul { ... _choice ( leafs, i ) } />
                                                   </Grabbable> )
 
   const treasure = _choice ( _choice ( [ bugs, mushes ], stuff_id ), stuff_id )
 
 
-  const handle_basketed_treasure = ( x, y ) => {
+  const _handle_basketed_treasure = ( x, y ) => {
 
-    if ( handle_basketed ( x, y, treasure.type ) ) {
+    if ( handle_basketed_treasure ( x, y, treasure.type ) ) {
 
       new_treasure ( v => v + 1 )
 
@@ -291,7 +295,7 @@ const Stuff = ( { seed, parent, handle_basketed } ) => {
                                         parent={ parent }
                                         stuff_id={ stuff_id }
                                         handle_dispawned={ handle_treasure_dispawned }
-                                        handle_basketed={ handle_basketed_treasure }>
+                                        handle_basketed={ _handle_basketed_treasure }>
                               <StuffSoul { ... treasure } />
                             </Grabbable>
 
@@ -388,7 +392,7 @@ const StuffContainer = ( { children } ) => {
     _mushrooms_basketed__set ( v )
   }
 
-  const handle_basketed = ( x, y, type ) => {
+  const handle_basketed_treasure = ( x, y, type ) => {
 
     if ( type !== 'mushroom' ) return false
 
@@ -413,7 +417,7 @@ const StuffContainer = ( { children } ) => {
                   ref={ ref }>
               {
                 parent
-                  ? Children.map ( children, ( e, stuff_id ) => cloneElement ( e, { parent: parent, handle_basketed } ) )
+                  ? Children.map ( children, ( e, stuff_id ) => cloneElement ( e, { parent: parent, handle_basketed_treasure } ) )
                   : null
               }
               <img key={ 2 } alt="" src={ noun_basket_1212091 } className={ styles.Basket } ref={ backet_ref } />
@@ -437,9 +441,10 @@ const StuffContainer = ( { children } ) => {
 const MushroomSearch = () => {
 
   return  ( <div className={ styles.MushroomSearch }>
+              <div className={ styles.MushroomSearchSrc }><a href="https://github.com/sluchaynayakotya/reactgovno/src/MushroomSearch">src</a>&nbsp;</div>
               <StuffContainer>
                 {
-                  Array ( 5 ) .fill () .map ( ( _, i ) => <Stuff key={ i } seed={ i } /> )
+                  Array ( 2 ) .fill () .map ( ( _, i ) => <Stuff key={ i } seed={ i } /> )
                 }
               </StuffContainer>
             </div> )

@@ -322,7 +322,7 @@ class ModalExtendedCard extends React.Component {
                 { this.render_data ( this.props.data ) }
 
                 <div  className="modal-extended-card__close"
-                      onClick={ () =>  this.props.onSetDataValue(null)}>
+                      onClick={ () => this.props.onSetDataValue ( null ) }>
 
                   [x]
 
@@ -538,9 +538,7 @@ class RickAndMorty extends React.Component {
                   <a href="http://kotya.tk/">jeg</a>&nbsp;<LoveHate />&nbsp;<a href="https://reactjs.org/">react</a>&nbsp;
                 </div>
 
-                <ModalExtendedCard data={ this.state.extended_card } onSetDataValue={(value) => this.setState({
-                    value
-                  })} />
+                <ModalExtendedCard data={ this.state.extended_card } onSetDataValue = { ( value ) => this.setState ( { extended_card : { type : null, value : null } } ) } />
 
               </div> )
 
